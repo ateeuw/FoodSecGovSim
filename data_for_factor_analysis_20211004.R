@@ -17,7 +17,7 @@ library(maps) #to get a list of all countries
 
 # functions
 source("./Functions/split_and_add_by_ID.R")
-source("./functions/split_and_add_by_doc.R")
+source("./Functions/split_and_add_by_doc.R")
 # source("./functions/dict_classification.R")
 source("./Functions/split_and_merge_by_doc.R")
 # source("./functions/reverse_dict.R")
@@ -315,7 +315,6 @@ spat$yes <- "yes"
 spat$`spatial & temporal - WBD7 region` <- paste("spatial -", spat$`spatial & temporal - WBD7 region`)
 spat <- spat %>% spread(key = "spatial & temporal - WBD7 region", value = "yes")
 spat <- spat[,-which(colnames(spat)=="rownr")]
-#spat <- spat[, -which(colnames(spat) == 'spatial - NA')]
 
 for(i in colnames(spat)[9:ncol(spat)]){
   cnr <- which(colnames(spat) == i) 
@@ -429,7 +428,6 @@ gov$yes <- "yes"
 gov <- unite(gov, col = "nest", c(1:4,6:ncol(gov)), sep = "_", remove = FALSE)
 gov$`per measure - objective class 2` <- paste("gov - obj", gov$`per measure - objective class 2`)
 gov <- gov %>% spread(key = "per measure - objective class 2", value = "yes")
-#test <- gov
 
 for(i in colnames(gov)[11:ncol(gov)]){
   cnr <- which(colnames(gov) == i)
@@ -607,9 +605,7 @@ nada <- govspfoagmod[rowSums(is.na(govspfoagmod)) > 4,]
 (mydocs <- sort(unique(govspfoagmod$Document)))
 (length(mydocs))
 
-govspfoagmod <- govspfoagmod[,-which(colnames(govspfoagmod)=="gov - unclear")]
-
-for(i in colnames(govspfoagmod)[which(colnames(govspfoagmod)=="gov - at large treatment"):ncol(govspfoagmod)]){
+for(i in colnames(govspfoagmod)[which(colnames(govspfoagmod)=="gov - At-large processing"):ncol(govspfoagmod)]){
   cnr <- which(colnames(govspfoagmod) == i)
   govspfoagmod[,cnr] <- na_to_no_nested(dat = govspfoagmod, na_col = i, matchterms = "yes", nest_col = "nest")
 }
@@ -624,14 +620,18 @@ nada <- govspfoagmod[rowSums(is.na(govspfoagmod)) > 4,]
 (mydocs <- sort(unique(govspfoagmod$Document)))
 (length(mydocs))
 
+govspfoagmod <- govspfoagmod[-which(colnames(govspfoagmod)=="FS - ")]
+govspfoagmod <- govspfoagmod[-which(colnames(govspfoagmod)=="gov - obj NA")]
+
 par(mfrow = c(3,3))
 for(i in 1:ncol(govspfoagmod)){print(barplot(table(govspfoagmod[,i]), 
                                              main = as.character(colnames(govspfoagmod[i])),
                                              xlab = i))}
 
-write.csv(govspfoagmod, file = "../variable_summary_tables/factor_analysis_data_20211006.csv")
+
+write.csv(govspfoagmod, file = "./Output/factor_analysis_data.csv")
 columnnames_wide <- colnames(govspfoagmod)
-save(columnnames_wide, file = "../variable_summary_tables/factor_analysis_names_20211006.rda")
+save(columnnames_wide, file = "./Output/factor_analysis_names.rda")
 
 
 
