@@ -3,6 +3,9 @@ na_to_no_nested <- function(dat, na_col, matchterms, nest_col){
   col_nr <- which(colnames(dat)==na_col)
   nest_col_nr <- which(colnames(dat)==nest_col)
   
+  dat[,col_nr] <- as.character(dat[,col_nr])
+  dat[,nest_col_nr] <- as.character(dat[,nest_col_nr])
+  
   for(i in unique(dat$Document)){
     dati <- dat[dat$Document == i,]
     
