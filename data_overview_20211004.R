@@ -13,19 +13,13 @@ library("dplyr") #for piping
 library("tidyr") #for data processing
 library("countrycode") #for aggregating countries into regions
 library("maps") #to get a list of all countries (for aggregating countries into regions)
-library("formattable") #for making nice tables #see https://haozhu233.github.io/kableExtra/awesome_table_in_html.html & http://cran.nexr.com/web/packages/kableExtra/vignettes/use_kableExtra_with_formattable.html 
-library("kableExtra") #for making nice tables #see https://haozhu233.github.io/kableExtra/awesome_table_in_html.html & http://cran.nexr.com/web/packages/kableExtra/vignettes/use_kableExtra_with_formattable.html 
 library("xlsx") #for saving data to xl
 library("rJava") #for optimising java in order to be able to save data
 
 # functions
-source("./functions/split_and_add_by_ID.R")
-source("./functions/split_and_add_by_doc.R")
-source("./functions/dict_classification.R")
-source("./functions/split_and_merge_by_doc.R")
+source("./Functions/dict_classification.R")
 source("./functions/level1_count.R")
-source("./functions/reverse_dict.R")
-source("./functions/check_dictionary.R")
+source("./Functions/check_dictionary.R")
 source("./functions/jgc.R") #optimising java 
 
 # dictionaries
@@ -33,14 +27,14 @@ source("./dictionaries/timpl_class.R")
 source("./dictionaries/timpl_class2.R")
 source("./dictionaries/comm_class.R")
 source("./dictionaries/comm2_class.R")
-source("./dictionaries/NOTA_class.R") 
-source("./dictionaries/NOTA_subclass.R")#dictionary linking governance measures to NATO subclasses
 source("./dictionaries/goals_class.R")
 source("./dictionaries/FSi_class.R")
+source("./Dictionaries/NATO_sub.R")
+source("./Dictionaries/NATO.R")
 
 # Load data ###################
 datadir <- "./Data"
-quotes <- read_excel(paste0(datadir, "/", "all_quotes_simpl.xlsx")) # read_excel("C:/Users/MeyerMA/OneDrive - Universiteit Twente/Paper/Review paper/Import_R_case_studies.xlsx")
+quotes <- read_excel(paste0(datadir, "/", "all_quotes_simpl.xlsx")) 
 # Load data ###################
 
 # Pre-process data ########################
@@ -220,60 +214,31 @@ for(i in which(quotes_long$code_group == "spatial & temporal - ref scale")){
 
 
 # Get type and subtype of governance measures
-check_dictionary(codegroup = "per measure - measure", codedictionary = undir_gov, dat_long = quotes_long) # check per measure undirected
-quotes_long$class <- ""
-quotes_long2 <- dict_classification(sheet = quotes_long[quotes_long$code_group == "per measure - measure",], dct = undir_gov, clm = 16, class_clm = 18)
-quotes_long2$name <- quotes_long2$class
-check_dictionary(codegroup = "per measure - measure", codedictionary = NOTA_subclass, dat_long = quotes_long2) # check per measure NATO subclass
-rm("quotes_long2")
+check_dictionary(codegroup = "per measure - measure", codedictionary = NATO_sub, dat_long = quotes_long) # check per measure undirected
+check_dictionary(codegroup = "per measure - measure", codedictionary = NATO, dat_long = quotes_long) # check per measure undirected
 
 for(i in which(quotes_long$code_group == "per measure - measure")){
   rowi <- quotes_long[i,]
-  rowi_undir <- rowi; rowi_subclass <- rowi; rowi_class <- rowi
+  rowi_subclass <- rowi; rowi_class <- rowi
   
   rowi$class <- ""
   class_clm = which(colnames(rowi) == "class")
   name_clm = which(colnames(rowi) == "name")
   
-  rowi <- dict_classification(sheet = rowi, dct = undir_gov, clm = name_clm, class_clm = class_clm)
-  
-  rowi_undir$code_group <- "per measure - measure undirected"
-  rowi_undir$name <- rowi$class
-  rowi_undir$name
-  
-  quotes_long <- rbind(quotes_long, rowi_undir)
-  tail(quotes_long[,15:ncol(quotes_long)])
-  
-  rowi_undir$class <- ""
-  class_clm = which(colnames(rowi_undir) == "class")
-  name_clm = which(colnames(rowi_undir) == "name")
-  
-  rowi_undir <- dict_classification(sheet = rowi_undir, dct = NOTA_subclass, clm = name_clm, class_clm = class_clm)
-  
+  rowi <- dict_classification(sheet = rowi, dct = NATO_sub, clm = name_clm, class_clm = class_clm)
   rowi_subclass$code_group <- "per measure - NATO subclass"
-  rowi_subclass$name <- rowi_undir$class
+  rowi_subclass$name <- rowi$class
   rowi_subclass$name
-  
   quotes_long <- rbind(quotes_long, rowi_subclass)
-  tail(quotes_long[,15:ncol(quotes_long)])
   
-  rowi_subclass$class <- ""
-  class_clm = which(colnames(rowi_subclass) == "class")
-  name_clm = which(colnames(rowi_subclass) == "name")
-  
-  rowi_subclass <- dict_classification(sheet = rowi_subclass, dct = NOTA_class, clm = name_clm, class_clm = class_clm)
-  
+  rowi <- dict_classification(sheet = rowi, dct = NATO, clm = name_clm, class_clm = class_clm)
   rowi_class$code_group <- "per measure - NATO class"
-  rowi_class$name <- rowi_subclass$class
-  
+  rowi_class$name <- rowi$class
+  rowi_class$name
   quotes_long <- rbind(quotes_long, rowi_class)
 }
 
 tail(quotes_long[,15:ncol(quotes_long)], n = 15)
-
-# remove unclear governance measures
-quotes_long <- quotes_long[-which(quotes_long$code_group == "per measure - NATO class" & quotes_long$name == "unclear"),]
-
 
 # Get type of governance objectives
 check_dictionary(codegroup = "per measure - objective", codedictionary = goals_class, dat_long = quotes_long) # check per measure - objective
@@ -946,12 +911,13 @@ quotes_wide <- quotes_wide[,-which(colnames(quotes_wide) %in% leave_out[16:lengt
 columnnames_wide <- colnames(quotes_wide)
 
 # Save data
-write.csv(quotes_long, file = "../variable_summary_tables/quotes_long.csv")
-write.csv(quotes_wide, file = "../variable_summary_tables/quotes_wide.csv")
-save(columnnames_wide, file = "../variable_summary_tables/columnnames_wide.rda")
+write.csv(quotes_long, file = "./Output/quotes_long.csv")
+write.csv(quotes_wide, file = "./Output/quotes_wide.csv")
+save(columnnames_wide, file = "./Output/columnnames_wide.rda")
 
 # Make overview and save to excel
 
+# Change names of some variables to avoid problems with export to excel
 colnames(quotes_wide)[which(colnames(quotes_wide) == "spatial & temporal - representation features")] <- "spatial & temporal - repr features"
 colnames(quotes_wide)[which(colnames(quotes_wide) == "spatial & temporal - representation split")] <- "spatial & temporal - repr split"
 colnames(quotes_wide)[which(colnames(quotes_wide) == "spatial & temporal - spatial extent [cells]")] <- "spatial & temporal - cell spatial ext"
@@ -962,12 +928,14 @@ colnames(quotes_wide)[which(colnames(quotes_wide) == "spatial & temporal - spati
 colnames(quotes_wide)[which(colnames(quotes_wide) == "spatial & temporal - temporal extent [d]")] <- "spatial & temporal - d temporal ext"
 colnames(quotes_wide)[which(colnames(quotes_wide) == "spatial & temporal - temporal extent")] <- "spatial & temporal - temporal ext"
 colnames(quotes_wide)[which(colnames(quotes_wide) == "spatial & temporal - temporal resolution [d]")] <- "spatial & temporal - temporal d res"
+colnames(quotes_wide)[which(colnames(quotes_wide) == "food system - commodity class 2")] <- "food system - commodity 2 class"
+colnames(quotes_wide)[which(colnames(quotes_wide) == "food system - commodity class")] <- "food system - commodity 1 class"
 
 favars <- sort(colnames(quotes_wide)[!(colnames(quotes_wide) %in% leave_out)])
 
 options(java.parameters = "-Xmx8000m") #To avoid error when exporting to excel
 
-write.xlsx(as.data.frame(favars), file="../variable_summary_tables/all_variables.xlsx", sheetName="all variables", row.names=FALSE)
+write.xlsx(as.data.frame(favars), file="./Output/all_variables.xlsx", sheetName="all variables", row.names=FALSE)
 
 varnr <- 0
 
@@ -988,7 +956,7 @@ for(i in favars){
   tablenamei <- paste0("./variable_summary_tables/", i, ".xlsx")
   tablenamei = gsub("\\?", "", tablenamei) #remove question mark
   
-  write.xlsx(cbind(i = datai_sum$name, "number" = datai_sum$n), file="../variable_summary_tables/all_variables.xlsx", 
+  write.xlsx(cbind(i = datai_sum$name, "number" = datai_sum$n), file="./Output/all_variables.xlsx", 
              sheetName=paste0(gsub("\\?", "", i),"_",varnr), row.names=FALSE, append = TRUE)
   
   print(datai_sum)
