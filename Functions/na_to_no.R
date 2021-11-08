@@ -1,6 +1,7 @@
 na_to_no <- function(dat, na_col, matchterm, val){
   
   col_nr <- which(colnames(dat)==na_col)
+  dat[,col_nr] <- as.character(dat[,col_nr])
   
   for(i in unique(dat$Document)){
     dati <- dat[dat$Document == i,]
