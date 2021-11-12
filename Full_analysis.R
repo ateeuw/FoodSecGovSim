@@ -24,7 +24,7 @@ source("./Data_overview.R")
 rm(list = ls()) #start with a clean environment
 
 # Install dependencies
-list.of.packages <- c("ggplot2", "readxl", "dplyr", "tidyr", "countrycode", "maps", "xlsx", "rJava")
+list.of.packages <- c("dplyr", "tidyr")
 new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
 if(length(new.packages)) install.packages(new.packages)
 
