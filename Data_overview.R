@@ -8,6 +8,7 @@
 rm(list = ls()) #start with a clean environment
 
 # libraries
+print("loading libraries")
 library("readxl") #for reading data
 library("dplyr") #for piping
 library("tidyr") #for data processing
@@ -17,6 +18,7 @@ library("xlsx") #for saving data to xl
 library("rJava") #for optimising java in order to be able to save data
 
 # functions
+print("sourcing functions")
 source("./Functions/dict_classification.R")
 source("./functions/level1_count.R")
 source("./Functions/check_dictionary.R")
@@ -33,11 +35,13 @@ source("./Dictionaries/NATO_sub.R")
 source("./Dictionaries/NATO.R")
 
 # Load data ###################
+print("loading data")
 datadir <- "./Data"
 quotes <- read_excel(paste0(datadir, "/", "all_quotes_simpl.xlsx")) 
 # Load data ###################
 
 # Pre-process data ########################
+print("start pre-processing data")
 quotes <- quotes[grepl("!Read for Lit review - eligible", quotes$`Document Groups`),] #ignore codes attached in papers ineligible for literature review
 
 # make quotes into long format (one quote per row, but still in the column "name")
@@ -77,6 +81,7 @@ quotes_long$name_id <- 1:nrow(quotes_long)
 unique(quotes_long$name[quotes_long$code_group == "spatial & temporal - representation split"])
 
 # Fix countries
+print("fix and aggregate country codes")
 # identify papers that represent all countries
 to_fix <- which(quotes_long$name == "all countries fix in R")
 
@@ -163,6 +168,7 @@ quotes_long[which(quotes_long$code_group == "spatial & temporal - WBD7 region" &
 nadata <- quotes_long[which(quotes_long$code_group == "spatial & temporal - WBD7 region" & is.na(quotes_long$name)),]
 
 # Aggregate spatial scales
+print("aggregate and quantify spatial scale codes")
 for(i in which(quotes_long$code_group == "spatial & temporal - ref scale")){
   dati <- quotes_long$name[i]
   rowi <- quotes_long[i,]
@@ -208,81 +214,6 @@ for(i in which(quotes_long$code_group == "spatial & temporal - ref scale")){
   }
   
   rowi_class$code_group <- "spatial & temporal - ref quan scale"
-  
-  quotes_long <- rbind(quotes_long, rowi_class)
-}
-
-
-# Get type and subtype of governance measures
-check_dictionary(codegroup = "per measure - measure", codedictionary = NATO_sub, dat_long = quotes_long) # check per measure undirected
-check_dictionary(codegroup = "per measure - measure", codedictionary = NATO, dat_long = quotes_long) # check per measure undirected
-
-for(i in which(quotes_long$code_group == "per measure - measure")){
-  rowi <- quotes_long[i,]
-  rowi_subclass <- rowi; rowi_class <- rowi
-  
-  rowi$class <- ""
-  class_clm = which(colnames(rowi) == "class")
-  name_clm = which(colnames(rowi) == "name")
-  
-  rowi <- dict_classification(sheet = rowi, dct = NATO_sub, clm = name_clm, class_clm = class_clm)
-  rowi_subclass$code_group <- "per measure - NATO subclass"
-  rowi_subclass$name <- rowi$class
-  rowi_subclass$name
-  quotes_long <- rbind(quotes_long, rowi_subclass)
-  
-  rowi <- dict_classification(sheet = rowi, dct = NATO, clm = name_clm, class_clm = class_clm)
-  rowi_class$code_group <- "per measure - NATO class"
-  rowi_class$name <- rowi$class
-  rowi_class$name
-  quotes_long <- rbind(quotes_long, rowi_class)
-}
-
-tail(quotes_long[,15:ncol(quotes_long)], n = 15)
-
-# Get type of governance objectives
-check_dictionary(codegroup = "per measure - objective", codedictionary = goals_class, dat_long = quotes_long) # check per measure - objective
-
-for(i in which(quotes_long$code_group == "per measure - objective")){
-  dati <- quotes_long$name[i]
-  rowi <- quotes_long[i,]
-  rowi_class <- rowi
-  
-  rowi$class <- ""
-  class_clm = which(colnames(rowi) == "class")
-  name_clm = which(colnames(rowi) == "name")
-  
-  rowi <- dict_classification(sheet = rowi, dct = goals_class, clm = name_clm, class_clm = class_clm)
-  
-  rowi_class$code_group <- "per measure - objective class"
-  rowi_class$name <- rowi$class
-  
-  quotes_long <- rbind(quotes_long, rowi_class)
-}
-
-# Aggregate type of governance objectives further
-check_dictionary(codegroup = "per measure - objective", codedictionary = goals_class, dat_long = quotes_long) # check per measure - objective
-
-for(i in which(quotes_long$code_group == "per measure - objective")){
-  dati <- quotes_long$name[i]
-  rowi <- quotes_long[i,]
-  rowi_class <- rowi
-  
-  rowi$class <- ""
-  class_clm = which(colnames(rowi) == "class")
-  name_clm = which(colnames(rowi) == "name")
-  
-  rowi <- dict_classification(sheet = rowi, dct = goals_class, clm = name_clm, class_clm = class_clm)
-  
-  rowi_class$code_group <- "per measure - objective class 2"
-  rowi_class$name <- rowi$class
-  
-  rowi_class$name <- gsub(pattern = "access  - general", replacement = "access", x = rowi_class$name)
-  rowi_class$name <- gsub(pattern = "access - economic", replacement = "access", x = rowi_class$name)
-  rowi_class$name <- gsub(pattern = "access  - physical", replacement = "access", x = rowi_class$name)
-  if(rowi_class$name %in% c("macro-logistics", "infrastructure & technology")){
-    rowi_class$name <- "infrastructure, logistics & technology"
-  }
   
   quotes_long <- rbind(quotes_long, rowi_class)
 }
@@ -336,10 +267,91 @@ for(i in which(quotes_long$code_group == "per measure - scale")){
   
   quotes_long <- rbind(quotes_long, rowi_class)
 }
+#############################################
 
+#############################################
+# Get type and subtype of governance measures
+print("classify and aggregate governance measure codes")
+check_dictionary(codegroup = "per measure - measure", codedictionary = NATO_sub, dat_long = quotes_long) # check per measure undirected
+check_dictionary(codegroup = "per measure - measure", codedictionary = NATO, dat_long = quotes_long) # check per measure undirected
 
+for(i in which(quotes_long$code_group == "per measure - measure")){
+  rowi <- quotes_long[i,]
+  rowi_subclass <- rowi; rowi_class <- rowi
+  
+  rowi$class <- ""
+  class_clm = which(colnames(rowi) == "class")
+  name_clm = which(colnames(rowi) == "name")
+  
+  rowi <- dict_classification(sheet = rowi, dct = NATO_sub, clm = name_clm, class_clm = class_clm)
+  rowi_subclass$code_group <- "per measure - NATO subclass"
+  rowi_subclass$name <- rowi$class
+  rowi_subclass$name
+  quotes_long <- rbind(quotes_long, rowi_subclass)
+  
+  rowi <- dict_classification(sheet = rowi, dct = NATO, clm = name_clm, class_clm = class_clm)
+  rowi_class$code_group <- "per measure - NATO class"
+  rowi_class$name <- rowi$class
+  rowi_class$name
+  quotes_long <- rbind(quotes_long, rowi_class)
+}
+
+tail(quotes_long[,15:ncol(quotes_long)], n = 15)
+#############################################
+
+# Get type of governance objectives
+#############################################
+print("classify and aggregate governance objective codes")
+check_dictionary(codegroup = "per measure - objective", codedictionary = goals_class, dat_long = quotes_long) # check per measure - objective
+
+for(i in which(quotes_long$code_group == "per measure - objective")){
+  dati <- quotes_long$name[i]
+  rowi <- quotes_long[i,]
+  rowi_class <- rowi
+  
+  rowi$class <- ""
+  class_clm = which(colnames(rowi) == "class")
+  name_clm = which(colnames(rowi) == "name")
+  
+  rowi <- dict_classification(sheet = rowi, dct = goals_class, clm = name_clm, class_clm = class_clm)
+  
+  rowi_class$code_group <- "per measure - objective class"
+  rowi_class$name <- rowi$class
+  
+  quotes_long <- rbind(quotes_long, rowi_class)
+}
+
+# Aggregate type of governance objectives further
+check_dictionary(codegroup = "per measure - objective", codedictionary = goals_class, dat_long = quotes_long) # check per measure - objective
+
+for(i in which(quotes_long$code_group == "per measure - objective")){
+  dati <- quotes_long$name[i]
+  rowi <- quotes_long[i,]
+  rowi_class <- rowi
+  
+  rowi$class <- ""
+  class_clm = which(colnames(rowi) == "class")
+  name_clm = which(colnames(rowi) == "name")
+  
+  rowi <- dict_classification(sheet = rowi, dct = goals_class, clm = name_clm, class_clm = class_clm)
+  
+  rowi_class$code_group <- "per measure - objective class 2"
+  rowi_class$name <- rowi$class
+  
+  rowi_class$name <- gsub(pattern = "access  - general", replacement = "access", x = rowi_class$name)
+  rowi_class$name <- gsub(pattern = "access - economic", replacement = "access", x = rowi_class$name)
+  rowi_class$name <- gsub(pattern = "access  - physical", replacement = "access", x = rowi_class$name)
+  if(rowi_class$name %in% c("macro-logistics", "infrastructure & technology")){
+    rowi_class$name <- "infrastructure, logistics & technology"
+  }
+  
+  quotes_long <- rbind(quotes_long, rowi_class)
+}
+#############################################
 
 # Get type of food security indicators
+#############################################
+print("classify and aggregate food security indicator codes")
 for(i in which(quotes_long$code_group == "per effect - FS indicator")){
   rowi <- quotes_long[i,]
   rowi_FS <- rowi
@@ -361,8 +373,11 @@ for(i in which(quotes_long$code_group == "per effect - FS indicator")){
 }
 
 quotes_long$name[which(quotes_long$name %in% c("macro-logistics", "infrastructure & technology"))] <- "infrastructure, logistics & technology"
+#############################################
 
 # Get type of food commodities
+#############################################
+print("classify and aggregate food commodity codes")
 check_dictionary(codegroup = "food system - commodity", codedictionary = comm_class, dat_long = quotes_long) #check commodity class
 
 
@@ -400,6 +415,8 @@ for(i in which(quotes_long$code_group == "food system - commodity")){
   
   quotes_long <- rbind(quotes_long, rowi_FS)
 }
+#############################################
+
 
 # Merge food value chain echelons
 quotes_long$name[which(quotes_long$name == "hunting/fishing/gathering")] <- "production*" #put footnote in figure text
