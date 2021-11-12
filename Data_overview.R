@@ -19,9 +19,9 @@ library("rJava") #for optimising java in order to be able to save data
 
 # functions
 print("sourcing functions")
-source("./Functions/dict_classification.R")
-source("./functions/level1_count.R")
-source("./Functions/check_dictionary.R")
+source("./Functions/dict_classification.R") # for classifying and aggregating atlas ti codes
+source("./functions/level1_count.R") #for creating summary statistics
+source("./Functions/check_dictionary.R") # for checking whether dictionaries contain classification info for all atlas ti codes
 source("./functions/jgc.R") #optimising java 
 
 # dictionaries
@@ -36,8 +36,7 @@ source("./Dictionaries/NATO.R")
 
 # Load data ###################
 print("loading data")
-datadir <- "./Data"
-quotes <- read_excel(paste0(datadir, "/", "all_quotes_simpl.xlsx")) 
+quotes <- read_excel("./Data/all_quotes_simpl.xlsx") 
 # Load data ###################
 
 # Pre-process data 
@@ -78,22 +77,15 @@ rm(list = c("quotes", "new_row", "code", "codes_vec", "code_vec", "codes", "i", 
 
 quotes_long$name_id <- 1:nrow(quotes_long)
 
-# Check out NAs in representation split
-unique(quotes_long$name[quotes_long$code_group == "spatial & temporal - representation split"])
-
 # Fix and aggregate countries
 #############################################
-print("fix and aggregate country codes")
+print("  fix and aggregate country codes")
 # identify papers that represent all countries
 to_fix <- which(quotes_long$name == "all countries fix in R")
 
 #get list of all countries
 x <- map("world", plot=FALSE)
-str(x)
-x$names
-
 countries <- unique(gsub("\\:.*","",x$names))
-countries
 
 # add country not in list:
 countries <- c(countries, "Dominican republic")
@@ -127,8 +119,6 @@ quotes_long$name[quotes_long$name == "Nevis"] <- "Saint Kitts and Nevis"
 quotes_long$name[quotes_long$name == "Tobago"] <- "Trinidad and Tobago"
 quotes_long$name[quotes_long$name == "Eswatini"] <- "Swaziland"
 
-sort(unique(quotes_long$name[quotes_long$code_group == "spatial & temporal - country"]))
-
 # Aggregate countries into larger regions (continent and 7 and 23 regions as defined by the World Bank for Development evaluation)
 for(i in which(quotes_long$code_group == "spatial & temporal - country")){
   dati <- quotes_long$name[i]
@@ -161,18 +151,12 @@ for(i in which(quotes_long$code_group == "spatial & temporal - country")){
   quotes_long <- rbind(quotes_long, rowi_r23)
   
 }
-warnings()
 rm(list = c("rowi", "rowi_cont", "rowj", "x", "countries", "dati", "i", "j", "no_country", "rowi_r23", "rowi_r7", "to_fix"))
-
-# Check out NAs in representation split
-unique(quotes_long$name[quotes_long$code_group == "spatial & temporal - WBD7 region"])
-quotes_long[which(quotes_long$code_group == "spatial & temporal - WBD7 region" & is.na(quotes_long$name)),14:ncol(quotes_long)]
-nadata <- quotes_long[which(quotes_long$code_group == "spatial & temporal - WBD7 region" & is.na(quotes_long$name)),]
 #############################################
 
 # Aggregate spatial scales
 #############################################
-print("aggregate and quantify spatial scale codes")
+print("  aggregate and quantify spatial scale codes")
 for(i in which(quotes_long$code_group == "spatial & temporal - ref scale")){
   dati <- quotes_long$name[i]
   rowi <- quotes_long[i,]
@@ -275,7 +259,7 @@ for(i in which(quotes_long$code_group == "per measure - scale")){
 
 # Get type and subtype of governance measures
 #############################################
-print("classify and aggregate governance measure codes")
+print("  classify and aggregate governance measure codes")
 check_dictionary(codegroup = "per measure - measure", codedictionary = NATO_sub, dat_long = quotes_long) # check per measure undirected
 check_dictionary(codegroup = "per measure - measure", codedictionary = NATO, dat_long = quotes_long) # check per measure undirected
 
@@ -299,13 +283,11 @@ for(i in which(quotes_long$code_group == "per measure - measure")){
   rowi_class$name
   quotes_long <- rbind(quotes_long, rowi_class)
 }
-
-tail(quotes_long[,15:ncol(quotes_long)], n = 15)
 #############################################
 
 # Get type of governance objectives
 #############################################
-print("classify and aggregate governance objective codes")
+print("  classify and aggregate governance objective codes")
 check_dictionary(codegroup = "per measure - objective", codedictionary = goals_class, dat_long = quotes_long) # check per measure - objective
 
 for(i in which(quotes_long$code_group == "per measure - objective")){
@@ -355,7 +337,7 @@ for(i in which(quotes_long$code_group == "per measure - objective")){
 
 # Get type of food security indicators
 #############################################
-print("classify and aggregate food security indicator codes")
+print("  classify and aggregate food security indicator codes")
 for(i in which(quotes_long$code_group == "per effect - FS indicator")){
   rowi <- quotes_long[i,]
   rowi_FS <- rowi
@@ -381,9 +363,8 @@ quotes_long$name[which(quotes_long$name %in% c("macro-logistics", "infrastructur
 
 # Get type of food commodities
 #############################################
-print("classify and aggregate food commodity codes")
+print("  classify and aggregate food commodity codes")
 check_dictionary(codegroup = "food system - commodity", codedictionary = comm_class, dat_long = quotes_long) #check commodity class
-
 
 for(i in which(quotes_long$code_group == "food system - commodity")){
   rowi <- quotes_long[i,]
@@ -423,20 +404,17 @@ for(i in which(quotes_long$code_group == "food system - commodity")){
 
 # Merge food value chain echelons
 #############################################
-print("aggregate food value chain echelon codes")
+print("  aggregate food value chain echelon codes")
 quotes_long$name[which(quotes_long$name == "hunting/fishing/gathering")] <- "production*" #put footnote in figure text
 
 # merge storage and processing
-unique(quotes_long$name[quotes_long$code_group == "food system - echelon"])
-(quotes_long$name[quotes_long$code_group == "food system - echelon"])
-
 quotes_long$name[which(quotes_long$name == "storage")] <- "storage and processing"
 quotes_long$name[which(quotes_long$name == "processing")]  <- "storage and processing"
 #############################################
 
 # Get type of agents
 #############################################
-print("classify and aggregate agent codes")
+print("  classify and aggregate agent codes")
 check_dictionary(codegroup = "per agent - agent", codedictionary = timpl_class, dat_long = quotes_long) #check agent class
 
 for(i in which(quotes_long$code_group == "per agent - agent")){
@@ -507,7 +485,6 @@ for(i in which(quotes_long$code_group == "per agent - agent")){
     rowi_bin$code_group <- "per agent - non-food agents other"
     quotes_long <- rbind(quotes_long, rowi_bin) 
   }else if(rowi_FS$name == "food traders"){
-    print("food traders here")
     rowi_bin$name <- "yes"
     rowi_bin$code_group <- "per agent - food traders"
     quotes_long <- rbind(quotes_long, rowi_bin)
@@ -517,9 +494,6 @@ for(i in which(quotes_long$code_group == "per agent - agent")){
     quotes_long <- rbind(quotes_long, rowi_bin)   
   }
 }
-
-tail(quotes_long[,14:ncol(quotes_long)], 60)
-quotes_long$name[which(quotes_long$code_group == "per agent - food traders")]
 
 # Get type of affected agents
 for(i in which(quotes_long$code_group == "per effect - affected agent")){
@@ -538,8 +512,6 @@ for(i in which(quotes_long$code_group == "per effect - affected agent")){
   
   quotes_long <- rbind(quotes_long, rowi_FS)
 }
-
-tail(quotes_long[14:ncol(quotes_long)], 20)
 
 # Get even more aggregated type of affected agents 
 check_dictionary(codegroup = "per effect - affected agent", codedictionary = timpl_class2, dat_long = quotes_long) #check agent class 2
@@ -601,15 +573,11 @@ for(i in which(quotes_long$code_group == "per effect - affected agent")){
   }
 }
 
-tail(quotes_long[14:ncol(quotes_long)], 20)
-sort(unique(quotes_long$name[which(quotes_long$code_group == "per effect - affected agent")]))
-sort(unique(quotes_long$name[which(quotes_long$code_group == "per effect - aff agent class 2")]))
-quotes_long$name[which(quotes_long$code_group == "per effect - affected food traders")]
 #############################################
 
 # Aggregate model types (merge discrete event with mathematical other)
 #############################################
-print("aggregate model type codes")
+print("  aggregate model type codes")
 quotes_long$name[quotes_long$name == "discrete event"] <- "mathematical other"
 
 #Split model types
@@ -657,12 +625,11 @@ for(i in which(quotes_long$code_group == "per model - type")){
   
 }
 
-tail(quotes_long[,14:ncol(quotes_long)], 20)
 #############################################
 
 # Fix data (split data type and whether the type is primary or secondary)
 #############################################
-print("split, classify and aggregate data type codes")
+print("  split, classify and aggregate data type codes")
 for(i in which(quotes_long$code_group == "modelling - data")){
   dati <- quotes_long$name[i]
   rowi <- quotes_long[i,]
@@ -759,11 +726,12 @@ if(length(which(quotes_long$code_group == "modelling - data aspatial" & is.na(qu
 if(length(which(quotes_long$code_group == "spatial & temporal - WBD7 region" & is.na(quotes_long$name))) > 0){
   quotes_long <- quotes_long[-which(quotes_long$code_group == "spatial & temporal - WBD7 region" & is.na(quotes_long$name)),] #outliers
 }
-
-
-tail(quotes_long, n = 20)[,14:ncol(quotes_long)]
+#############################################
 
 # Split model domain into four yes/no columns
+#############################################
+print("  split model domain codes")
+
 for(i in which(quotes_long$code_group == "per model - domain")){
   
   dati <- quotes_long$name[i]
@@ -790,9 +758,11 @@ for(i in which(quotes_long$code_group == "per model - domain")){
   }
 }
 
-tail(quotes_long, n = 20)[,14:ncol(quotes_long)]
+#############################################
 
 # (Further) split up spatial & temporal - representation split
+#############################################
+print("  split up spatial representation codes")
 for(i in which(quotes_long$code_group == "spatial & temporal - representation split")){
   
   dati <- quotes_long$name[i]
@@ -811,9 +781,11 @@ for(i in which(quotes_long$code_group == "spatial & temporal - representation sp
   }
 }
 
-tail(quotes_long, n = 20)[,14:ncol(quotes_long)]
+#############################################
 
 # Split up per measure - type 2 
+#############################################
+print("  split up type of governance measures in communal, public or private")
 for(i in which(quotes_long$code_group == "per measure - type 2")){
   
   dati <- quotes_long$name[i]
@@ -849,12 +821,11 @@ for(i in which(quotes_long$code_group == "per measure - type 2")){
   }
 }
 
-tail(quotes_long, n = 20)[,14:ncol(quotes_long)]
 #############################################
 
 # Split up per measure - simulation
 #############################################
-print("split simulation (process or effect-based) codes")
+print("  split simulation (process or effect-based) codes")
 for(i in which(quotes_long$code_group == "per measure - simulation")){
   
   dati <- quotes_long$name[i]
@@ -876,10 +847,11 @@ for(i in which(quotes_long$code_group == "per measure - simulation")){
     quotes_long <- rbind(quotes_long, rowi_split)
   }
 }
-
-tail(quotes_long, n = 20)[,14:ncol(quotes_long)]
+#############################################
 
 # Split up per effect - place
+#############################################
+print("  split up governance impacts based on where they occur (within/outside jurisdiction or global")
 for(i in which(quotes_long$code_group == "per effect - place")){
   
   dati <- quotes_long$name[i]
@@ -902,12 +874,6 @@ for(i in which(quotes_long$code_group == "per effect - place")){
   }
 }
 
-tail(quotes_long, n = 20)[,14:ncol(quotes_long)]
-
-# Check out NAs in representation split
-unique(quotes_long$name[quotes_long$code_group == "spatial & temporal - representation split"])
-
-tail(quotes_long, n = 20)[,14:ncol(quotes_long)]
 #############################################
 
 quotes_long <- quotes_long %>% distinct()
@@ -927,7 +893,7 @@ print("start processing data")
 
 # Remove codes that are not relevant for further analysis
 #############################################
-print("remove codes that are not relevant for further analysis")
+print("  remove codes that are not relevant for further analysis")
 
 leave_out <- c("ID", "Quotation Name", "Document", "Document Groups", "Quotation Content", "Comment", "Codes", "Reference", "Density", "Created by", "Modified by", "Created", 
                "Modified", "code", "name_id", "framing", "location", "definition - crowd-shipping", "decision-making", "agent characteristic", "agent decision", "decision-making method",
@@ -947,7 +913,7 @@ leave_out <- c("ID", "Quotation Name", "Document", "Document Groups", "Quotation
 
 # Save processed data
 #############################################
-print("save processed data: ./Output/quotes_long.csv and ./Output/quotes_wide.csv")
+print("  save processed data: ./Output/quotes_long.csv and ./Output/quotes_wide.csv")
 # Make dataframe without useless variables
 quotes_long <- quotes_long[-which(quotes_long$code_group %in% leave_out[16:length(leave_out)]),]
 quotes_wide <- quotes_wide[,-which(colnames(quotes_wide) %in% leave_out[16:length(leave_out)])]
@@ -958,9 +924,10 @@ columnnames_wide <- colnames(quotes_wide)
 write.csv(quotes_long, file = "./Output/quotes_long.csv")
 write.csv(quotes_wide, file = "./Output/quotes_wide.csv")
 save(columnnames_wide, file = "./Output/columnnames_wide.rda")
+#############################################
 
 print("finished processing data")
-#############################################
+
 
 # Make overview of the data and save to excel
 #############################################
@@ -990,8 +957,8 @@ varnr <- 0
 
 for(i in favars){
   varnr <- varnr + 1
-  print("---------------------------------------------------")
-  print(i)
+  print("  ---------------------------------------------------")
+  print(paste(" ", i))
   
   gc(verbose = FALSE) #garbage collection R to avoid memory problems
   jgc() #garbage collection Java to avoid memory problems
@@ -1009,7 +976,7 @@ for(i in favars){
              sheetName=paste0(gsub("\\?", "", i),"_",varnr), row.names=FALSE, append = TRUE)
   
   print(datai_sum)
-  print("===================================================")
-  print("                                                   ")
+  print("  ===================================================")
+  print("                                                     ")
 }
 #############################################
