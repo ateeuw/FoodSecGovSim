@@ -11,27 +11,16 @@ rm(list = ls()) #start with a clean environment
 
 # libraries
 print("loading libraries")
-# library(readxl) #for reading data
 library(dplyr) #for piping
 library(tidyr) #for data processing
-# library(countrycode) #for aggregating countries into regions
-# library(maps) #to get a list of all countries
 
 # functions
 print("sourcing functions")
 source("./Functions/split_and_add_by_ID.R")
 source("./Functions/split_and_add_by_doc.R")
 source("./Functions/split_and_merge_by_doc.R")
-# source("./Functions/na_to_no.R")
 source("./Functions/na_to_no_nested.R")
 source("./Functions/na_to_no_nested_simpl.R")
-
-# dictionaries
-# source("./dictionaries/timpl_class.R")
-# source("./dictionaries/comm_class.R")
-# source("./dictionaries/NOTA_class.R") 
-# source("./dictionaries/NOTA_subclass.R")#dictionary linking governance measures to NATO subclasses
-# source("./dictionaries/goals_class.R")
 
 # Loading data
 print("loading data")
@@ -129,7 +118,7 @@ modelling <- full_join(modelling, nest4)
 modelling <- full_join(modelling, nest6)
 modelling <- full_join(modelling, nest7)
 modelling <- full_join(modelling, nest8)
-colnames(modelling)
+
 modelling <- modelling %>% distinct()
 
 modelling$`per model - biophysical domain` <- as.character(modelling$`per model - biophysical domain`)
@@ -204,8 +193,8 @@ agent <- agent %>% distinct()
 
 # checking whether everything went OK
 nada <- agent[rowSums(is.na(agent)) > 4,]
-(mydocs <- sort(unique(agent$Document)))
-(length(mydocs)) #nope!
+# (mydocs <- sort(unique(agent$Document)))
+# (length(mydocs)) #nope!
 
 #############################################
 
@@ -251,7 +240,7 @@ food$`food system - echelon` <- paste("food -", food$`food system - echelon`)
 food <- food %>% spread(key = "food system - echelon", value = "yes")
 food <- food[,-which(colnames(food)=="rownr")]
 
-colnames(food)
+# colnames(food)
 
 for(i in colnames(food)[3:ncol(food)]){
   cnr <- which(colnames(food) == i) 
@@ -262,28 +251,23 @@ for(i in colnames(food)[3:ncol(food)]){
 food <- food %>% distinct()
 
 # Split up food system - commodity
-unique(food$`food system - commodity class 2`)
-
 food$rownr <- 1:nrow(food)
 food$yes <- "yes"
 food$`food system - commodity class 2` <- paste("food -", food$`food system - commodity class 2`)
 food <- food %>% spread(key = "food system - commodity class 2", value = "yes")
 food <- food[,-which(colnames(food)=="rownr")]
 
-colnames(food)
-
 for(i in colnames(food)[8:ncol(food)]){
   cnr <- which(colnames(food) == i) 
   food[,cnr] <- na_to_no(dat = food, na_col = i, matchterm = "yes", val = "yes")
 }
 
-
 food <- food %>% distinct()
 
 # checking whether everything went OK
 nada <- food[rowSums(is.na(food)) > 4,]
-(mydocs <- sort(unique(food$Document)))
-(length(mydocs)) #yes!
+# (mydocs <- sort(unique(food$Document)))
+# (length(mydocs)) #yes!
 
 #############################################
 
@@ -291,8 +275,8 @@ foagmod <- merge(agmod, food)
 
 # checking whether everything went OK
 nada <- foagmod[rowSums(is.na(foagmod)) > 4,]
-(mydocs <- sort(unique(foagmod$Document)))
-(length(mydocs)) #nope!
+# (mydocs <- sort(unique(foagmod$Document)))
+# (length(mydocs)) #nope!
 
 # Preparing spatial and temporal variables
 #############################################
@@ -337,8 +321,8 @@ spat <- spat %>% distinct()
 
 # checking whether everything went OK
 nada <- spat[rowSums(is.na(spat)) > 4,]
-(mydocs <- sort(unique(spat$Document)))
-(length(mydocs)) #yes!
+# (mydocs <- sort(unique(spat$Document)))
+# (length(mydocs)) #yes!
 
 #############################################
 
@@ -346,8 +330,8 @@ spfoagmod <- merge(foagmod, spat)
 
 # checking whether everything went OK
 nada <- spfoagmod[rowSums(is.na(spfoagmod)) > 4,]
-(mydocs <- sort(unique(spfoagmod$Document)))
-(length(mydocs)) #nope!
+# (mydocs <- sort(unique(spfoagmod$Document)))
+# (length(mydocs)) #nope!
 
 # Preparing governance variables
 #############################################
@@ -450,13 +434,10 @@ for(i in colnames(gov)[11:ncol(gov)]){
 gov <- gov[,-which(colnames(gov)=="nest")]
 gov <- gov %>% distinct()
 
-par(mfrow = c(3,3))
-for(i in 1:ncol(gov)){print(barplot(table(gov[,i]), main = as.character(colnames(gov[i]))))}
-
 # checking whether everything went OK
 nada <- gov[rowSums(is.na(nest)) > 4,]
-(mydocs <- sort(unique(gov$Document)))
-(length(mydocs))
+# (mydocs <- sort(unique(gov$Document)))
+# (length(mydocs))
 
 #############################################
 
@@ -464,8 +445,8 @@ govspfoagmod <- merge(spfoagmod, gov) # <- something goes wrong here, check spfo
 
 # checking whether everything went OK
 nada <- govspfoagmod[rowSums(is.na(nest)) > 4,]
-(mydocs <- sort(unique(govspfoagmod$Document)))
-(length(mydocs))
+# (mydocs <- sort(unique(govspfoagmod$Document)))
+# (length(mydocs))
 
 rm(list = c("spfoagmod", "gov", paste0("nest", c("", 2:4,6)), "gov_codes", "empty_rows", "keep"))
 
@@ -493,10 +474,7 @@ nest <- nest[-which(is.na(nest$`per measure - NATO subclass`)),]
 nest <- nest[,-which(colnames(nest) %in% c("name_id"))]
 
 # variables nested within the nested variable
-impact_vars <- c( "per effect - aff agent class 2", #"per effect - affected food producers", "per effect - affected food distributors transporters",
-                  #"per effect - affected food storers and processors", "per effect - affected food retailers", "per effect - affected food consumers",
-                  #"per effect - affected agents", "per effect - affected political entities", "per effect - affected non-food agents other", 
-                  "per effect - direct?", "per effect - intended?", "per effect - place", "per effect - type other")
+impact_vars <- c( "per effect - aff agent class 2", "per effect - direct?", "per effect - intended?", "per effect - place", "per effect - type other")
 
 #affected agent class
 nesta <- quotes_wide[,which(colnames(quotes_wide) %in% c("per effect - aff agent class 2", "per effect - FS indicator class", "name_id", "Document", "ID"))]
@@ -579,8 +557,6 @@ nest <- nest %>% spread(key = "per effect - aff agent class 2", value = "yes")
 nest <- nest[,-which(colnames(nest)=="rownr")]
 to_no <- is.na(nest[,which(colnames(nest)=="aff food consumers"):ncol(nest)])
 nest[,which(colnames(nest)=="aff food consumers"):ncol(nest)][to_no] <- "no"
-
-#nest <- nest[,-which(colnames(nest) == 'aff NA')]
 nest <- nest %>% distinct()
 
 # Split up per effect - FS indicator class
@@ -601,8 +577,8 @@ nest <- nest %>% distinct()
 
 # checking whether everything went OK
 nada <- govspfoagmod[rowSums(is.na(nest)) > 4,]
-(mydocs <- sort(unique(nest$Document)))
-(length(mydocs))
+# (mydocs <- sort(unique(nest$Document)))
+# (length(mydocs))
 
 #############################################
 govspfoagmod <- merge(govspfoagmod, nest)
@@ -617,8 +593,8 @@ govspfoagmod <- unite(govspfoagmod, col = "nest", c(1,which(colnames(govspfoagmo
 govspfoagmod$`per measure - NATO subclass` <- paste("gov -", govspfoagmod$`per measure - NATO subclass`)
 govspfoagmod <- govspfoagmod %>% spread(key = "per measure - NATO subclass", value = "yes")
 nada <- govspfoagmod[rowSums(is.na(govspfoagmod)) > 4,]
-(mydocs <- sort(unique(govspfoagmod$Document)))
-(length(mydocs))
+# (mydocs <- sort(unique(govspfoagmod$Document)))
+# (length(mydocs))
 
 for(i in colnames(govspfoagmod)[which(colnames(govspfoagmod)=="gov - At-large processing"):ncol(govspfoagmod)]){
   cnr <- which(colnames(govspfoagmod) == i)
@@ -632,16 +608,17 @@ govspfoagmod <- govspfoagmod %>% distinct()
 rm(list = c(paste0("nest", c("", "a", "b", "c", "d")), "empty_rows", "impact_vars", "gov", "keep", "gov_codes"))
 
 nada <- govspfoagmod[rowSums(is.na(govspfoagmod)) > 4,]
-(mydocs <- sort(unique(govspfoagmod$Document)))
-(length(mydocs))
+# (mydocs <- sort(unique(govspfoagmod$Document)))
+# (length(mydocs))
 
 govspfoagmod <- govspfoagmod[-which(colnames(govspfoagmod)=="FS - ")]
 govspfoagmod <- govspfoagmod[-which(colnames(govspfoagmod)=="gov - obj NA")]
 
-print("save data")
+print("saving data: ./Output/factor_analysis_data.csv")
 write.csv(govspfoagmod, file = "./Output/factor_analysis_data.csv")
 columnnames_wide <- colnames(govspfoagmod)
 save(columnnames_wide, file = "./Output/factor_analysis_names.rda")
 
+print("finished preparing data for factor analysis")
 
 
