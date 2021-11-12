@@ -1,7 +1,7 @@
 # This script serves to create a clean overview of my data
 
 # Author: Aleid Sunniva Teeuwen
-# Date: 02.11.2021
+# Date: 12.11.2021
 # Project: FoodSecGovSim
 # Publication: Ex-ante assessment of food security governance: a systematic review of simulation models
 
@@ -40,7 +40,8 @@ datadir <- "./Data"
 quotes <- read_excel(paste0(datadir, "/", "all_quotes_simpl.xlsx")) 
 # Load data ###################
 
-# Pre-process data ########################
+# Pre-process data 
+#############################################
 print("start pre-processing data")
 quotes <- quotes[grepl("!Read for Lit review - eligible", quotes$`Document Groups`),] #ignore codes attached in papers ineligible for literature review
 
@@ -80,7 +81,8 @@ quotes_long$name_id <- 1:nrow(quotes_long)
 # Check out NAs in representation split
 unique(quotes_long$name[quotes_long$code_group == "spatial & temporal - representation split"])
 
-# Fix countries
+# Fix and aggregate countries
+#############################################
 print("fix and aggregate country codes")
 # identify papers that represent all countries
 to_fix <- which(quotes_long$name == "all countries fix in R")
@@ -166,8 +168,10 @@ rm(list = c("rowi", "rowi_cont", "rowj", "x", "countries", "dati", "i", "j", "no
 unique(quotes_long$name[quotes_long$code_group == "spatial & temporal - WBD7 region"])
 quotes_long[which(quotes_long$code_group == "spatial & temporal - WBD7 region" & is.na(quotes_long$name)),14:ncol(quotes_long)]
 nadata <- quotes_long[which(quotes_long$code_group == "spatial & temporal - WBD7 region" & is.na(quotes_long$name)),]
+#############################################
 
 # Aggregate spatial scales
+#############################################
 print("aggregate and quantify spatial scale codes")
 for(i in which(quotes_long$code_group == "spatial & temporal - ref scale")){
   dati <- quotes_long$name[i]
@@ -269,8 +273,8 @@ for(i in which(quotes_long$code_group == "per measure - scale")){
 }
 #############################################
 
-#############################################
 # Get type and subtype of governance measures
+#############################################
 print("classify and aggregate governance measure codes")
 check_dictionary(codegroup = "per measure - measure", codedictionary = NATO_sub, dat_long = quotes_long) # check per measure undirected
 check_dictionary(codegroup = "per measure - measure", codedictionary = NATO, dat_long = quotes_long) # check per measure undirected
@@ -417,11 +421,22 @@ for(i in which(quotes_long$code_group == "food system - commodity")){
 }
 #############################################
 
-
 # Merge food value chain echelons
+#############################################
+print("aggregate food value chain echelon codes")
 quotes_long$name[which(quotes_long$name == "hunting/fishing/gathering")] <- "production*" #put footnote in figure text
 
+# merge storage and processing
+unique(quotes_long$name[quotes_long$code_group == "food system - echelon"])
+(quotes_long$name[quotes_long$code_group == "food system - echelon"])
+
+quotes_long$name[which(quotes_long$name == "storage")] <- "storage and processing"
+quotes_long$name[which(quotes_long$name == "processing")]  <- "storage and processing"
+#############################################
+
 # Get type of agents
+#############################################
+print("classify and aggregate agent codes")
 check_dictionary(codegroup = "per agent - agent", codedictionary = timpl_class, dat_long = quotes_long) #check agent class
 
 for(i in which(quotes_long$code_group == "per agent - agent")){
@@ -590,8 +605,11 @@ tail(quotes_long[14:ncol(quotes_long)], 20)
 sort(unique(quotes_long$name[which(quotes_long$code_group == "per effect - affected agent")]))
 sort(unique(quotes_long$name[which(quotes_long$code_group == "per effect - aff agent class 2")]))
 quotes_long$name[which(quotes_long$code_group == "per effect - affected food traders")]
+#############################################
 
 # Aggregate model types (merge discrete event with mathematical other)
+#############################################
+print("aggregate model type codes")
 quotes_long$name[quotes_long$name == "discrete event"] <- "mathematical other"
 
 #Split model types
@@ -640,8 +658,11 @@ for(i in which(quotes_long$code_group == "per model - type")){
 }
 
 tail(quotes_long[,14:ncol(quotes_long)], 20)
+#############################################
 
 # Fix data (split data type and whether the type is primary or secondary)
+#############################################
+print("split, classify and aggregate data type codes")
 for(i in which(quotes_long$code_group == "modelling - data")){
   dati <- quotes_long$name[i]
   rowi <- quotes_long[i,]
@@ -829,8 +850,11 @@ for(i in which(quotes_long$code_group == "per measure - type 2")){
 }
 
 tail(quotes_long, n = 20)[,14:ncol(quotes_long)]
+#############################################
 
 # Split up per measure - simulation
+#############################################
+print("split simulation (process or effect-based) codes")
 for(i in which(quotes_long$code_group == "per measure - simulation")){
   
   dati <- quotes_long$name[i]
@@ -880,31 +904,30 @@ for(i in which(quotes_long$code_group == "per effect - place")){
 
 tail(quotes_long, n = 20)[,14:ncol(quotes_long)]
 
-
 # Check out NAs in representation split
 unique(quotes_long$name[quotes_long$code_group == "spatial & temporal - representation split"])
 
 tail(quotes_long, n = 20)[,14:ncol(quotes_long)]
-
-# merge storage and processing
-unique(quotes_long$name[quotes_long$code_group == "food system - echelon"])
-(quotes_long$name[quotes_long$code_group == "food system - echelon"])
-
-quotes_long$name[which(quotes_long$name == "storage")] <- "storage and processing"
-quotes_long$name[which(quotes_long$name == "processing")]  <- "storage and processing"
+#############################################
 
 quotes_long <- quotes_long %>% distinct()
 quotes_long$name_id <- 1:nrow(quotes_long)
-
 
 quotes_wide <- quotes_long %>% pivot_wider(names_from = code_group, values_from = name)
 sort(colnames(quotes_wide))
 
 rm(list = c("rowi", "rowi_class", "rowi_FS", "rowi_primi", "rowi_spliti", "rowi_subclass", "class_clm", "dat_primi", "dat_spliti", "dati", "i", "name_clm"))
 
-# Pre-process data ########################
+print("finished pre-processing data")
+# Pre-process data finished
 
-colnames(quotes_wide)
+# Processing data
+#############################################
+print("start processing data")
+
+# Remove codes that are not relevant for further analysis
+#############################################
+print("remove codes that are not relevant for further analysis")
 
 leave_out <- c("ID", "Quotation Name", "Document", "Document Groups", "Quotation Content", "Comment", "Codes", "Reference", "Density", "Created by", "Modified by", "Created", 
                "Modified", "code", "name_id", "framing", "location", "definition - crowd-shipping", "decision-making", "agent characteristic", "agent decision", "decision-making method",
@@ -920,7 +943,11 @@ leave_out <- c("ID", "Quotation Name", "Document", "Document Groups", "Quotation
                "per effect - FS dimension", "per effect - indicator other", "per effect - unit indicator other", "spatial & temporal - constituent state", "per effect - indicator other",
                "per measure - type", "governance - measures", "modelling - calibration?", "new word - incumbent", "class", "per patch - characteristic"
 )
+#############################################
 
+# Save processed data
+#############################################
+print("save processed data: ./Output/quotes_long.csv and ./Output/quotes_wide.csv")
 # Make dataframe without useless variables
 quotes_long <- quotes_long[-which(quotes_long$code_group %in% leave_out[16:length(leave_out)]),]
 quotes_wide <- quotes_wide[,-which(colnames(quotes_wide) %in% leave_out[16:length(leave_out)])]
@@ -932,7 +959,12 @@ write.csv(quotes_long, file = "./Output/quotes_long.csv")
 write.csv(quotes_wide, file = "./Output/quotes_wide.csv")
 save(columnnames_wide, file = "./Output/columnnames_wide.rda")
 
-# Make overview and save to excel
+print("finished processing data")
+#############################################
+
+# Make overview of the data and save to excel
+#############################################
+print("make and overview of the frequency of different codes within each code category and save to ./Output/all_variables.xlsx")
 
 # Change names of some variables to avoid problems with export to excel
 colnames(quotes_wide)[which(colnames(quotes_wide) == "spatial & temporal - representation features")] <- "spatial & temporal - repr features"
@@ -980,3 +1012,4 @@ for(i in favars){
   print("===================================================")
   print("                                                   ")
 }
+#############################################
