@@ -975,7 +975,7 @@ for(i in favars){
   write.xlsx(cbind(i = datai_sum$name, "number" = datai_sum$n), file="./Output/all_variables.xlsx", 
              sheetName=paste0(gsub("\\?", "", i),"_",varnr), row.names=FALSE, append = TRUE)
   
-  print(datai_sum)
+  print(paste(" ", datai_sum))
   print("  ===================================================")
   print("                                                     ")
 }
