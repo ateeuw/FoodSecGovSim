@@ -1,46 +1,53 @@
 # Here I create the dataframe upon which I will run the factor analysis
 
 # Author: Aleid Sunniva Teeuwen
-# Date: 17.08.2021
-# Project: The impact of governance on food security: a systematic review of simulation models
+# Date: 12.11.2021
+# Project: FoodSecGovSim
+# Publication: The impact of governance on food security: a systematic review of simulation models
 
 
 rm(list = ls()) #start with a clean environment
 
 
 # libraries
-library(readxl) #for reading data
+print("loading libraries")
+# library(readxl) #for reading data
 library(dplyr) #for piping
 library(tidyr) #for data processing
-library(countrycode) #for aggregating countries into regions
-library(maps) #to get a list of all countries
+# library(countrycode) #for aggregating countries into regions
+# library(maps) #to get a list of all countries
 
 # functions
+print("sourcing functions")
 source("./Functions/split_and_add_by_ID.R")
 source("./Functions/split_and_add_by_doc.R")
-# source("./functions/dict_classification.R")
 source("./Functions/split_and_merge_by_doc.R")
-# source("./functions/reverse_dict.R")
-source("./Functions/na_to_no.R")
+# source("./Functions/na_to_no.R")
 source("./Functions/na_to_no_nested.R")
 source("./Functions/na_to_no_nested_simpl.R")
 
 # dictionaries
-source("./dictionaries/timpl_class.R")
-source("./dictionaries/comm_class.R")
-source("./dictionaries/NOTA_class.R") 
-source("./dictionaries/NOTA_subclass.R")#dictionary linking governance measures to NATO subclasses
-source("./dictionaries/goals_class.R")
+# source("./dictionaries/timpl_class.R")
+# source("./dictionaries/comm_class.R")
+# source("./dictionaries/NOTA_class.R") 
+# source("./dictionaries/NOTA_subclass.R")#dictionary linking governance measures to NATO subclasses
+# source("./dictionaries/goals_class.R")
 
-# data
+# Loading data
+print("loading data")
+#############################################
 quotes_long <- read.csv(file = "./Output/quotes_long.csv")
 quotes_wide <- read.csv(file = "./Output/quotes_wide.csv")
 colnames(quotes_wide)
 load("./Output/columnnames_wide.rda")
 colnames(quotes_wide) <- c("rownr", columnnames_wide)
 sort(colnames(quotes_wide))
+#############################################
 
-# modelling #############################
+# Preparing model variables
+#############################################
+print("preparing model variables")
+
 modelling <- quotes_wide
 
 # main variables ###
@@ -164,10 +171,12 @@ if(length(which(colnames(modelling)=="modelling - NA"))>0){modelling <- modellin
 if(length(which(colnames(modelling)=="per model - NA"))>0){modelling <- modelling[,-which(colnames(modelling)=="per model - NA")]}
 modelling <- modelling %>% distinct()
 
-# modelling #############################
+#############################################
 
 
-# agent & per agent - agent #############################
+# Preparing agent variables
+#############################################
+print("preparing agent variables")
 agent <- quotes_wide
 agent_codes <- c("agent - representation", "per agent - food producers", "per agent - food distributors transporters",
                  "per agent - food storers and processors", "per agent - food retailers", "per agent - food consumers",
@@ -198,7 +207,7 @@ nada <- agent[rowSums(is.na(agent)) > 4,]
 (mydocs <- sort(unique(agent$Document)))
 (length(mydocs)) #nope!
 
-# agent & per agent - agent #############################
+#############################################
 
 agmod <- full_join(agent, modelling)
 
@@ -209,8 +218,9 @@ nada <- agmod[rowSums(is.na(agmod)) > 4,]
 
 agmod[rowSums(is.na(agmod[,2:9])) > 4,2:9] <- "no" #models that do not have any agents are given no for each agent (otherwise would get NA)
 
-
-# food system #############################
+# Preparing food system variables
+#############################################
+print("preparing food system variables")
 food <- quotes_wide
 food_codes <- c("food system - commodity class 2", "food system - echelon")
 keep <- which(colnames(food) %in% c(food_codes, "name_id", "Document"))
@@ -275,7 +285,7 @@ nada <- food[rowSums(is.na(food)) > 4,]
 (mydocs <- sort(unique(food$Document)))
 (length(mydocs)) #yes!
 
-# food system #############################
+#############################################
 
 foagmod <- merge(agmod, food)
 
@@ -284,8 +294,9 @@ nada <- foagmod[rowSums(is.na(foagmod)) > 4,]
 (mydocs <- sort(unique(foagmod$Document)))
 (length(mydocs)) #nope!
 
-
-# spatial & temporal #############################
+# Preparing spatial and temporal variables
+#############################################
+print("preparing spatial and temporal variables")
 spat <- quotes_wide
 sort(colnames(quotes_wide))
 spat_codes <- c("spatial & temporal - geographic representation", "spatial & temporal - hypothetical representation", 
@@ -329,7 +340,7 @@ nada <- spat[rowSums(is.na(spat)) > 4,]
 (mydocs <- sort(unique(spat$Document)))
 (length(mydocs)) #yes!
 
-# spatial & temporal #############################
+#############################################
 
 spfoagmod <- merge(foagmod, spat) 
 
@@ -338,7 +349,9 @@ nada <- spfoagmod[rowSums(is.na(spfoagmod)) > 4,]
 (mydocs <- sort(unique(spfoagmod$Document)))
 (length(mydocs)) #nope!
 
-# governance #############################
+# Preparing governance variables
+#############################################
+print("preparing governance variables")
 gov <- quotes_wide
 gov_codes <- c("governance - combined measures?", "per measure - NATO subclass", "per measure - communal", "per measure - private", 
                "per measure - public", "per measure - objective class 2", "per measure - process-based simulation", 
@@ -445,7 +458,7 @@ nada <- gov[rowSums(is.na(nest)) > 4,]
 (mydocs <- sort(unique(gov$Document)))
 (length(mydocs))
 
-# governance #############################
+#############################################
 
 govspfoagmod <- merge(spfoagmod, gov) # <- something goes wrong here, check spfoagmod
 
@@ -456,7 +469,9 @@ nada <- govspfoagmod[rowSums(is.na(nest)) > 4,]
 
 rm(list = c("spfoagmod", "gov", paste0("nest", c("", 2:4,6)), "gov_codes", "empty_rows", "keep"))
 
-# governance impact #############################
+# Preparing governance impact variables
+#############################################
+print("preparing governance impactvariables")
 
 # main variable
 gov <- quotes_wide
@@ -589,7 +604,7 @@ nada <- govspfoagmod[rowSums(is.na(nest)) > 4,]
 (mydocs <- sort(unique(nest$Document)))
 (length(mydocs))
 
-# governance impact #############################
+#############################################
 govspfoagmod <- merge(govspfoagmod, nest)
 govspfoagmod <- govspfoagmod %>% distinct()
 test <- govspfoagmod
@@ -623,12 +638,7 @@ nada <- govspfoagmod[rowSums(is.na(govspfoagmod)) > 4,]
 govspfoagmod <- govspfoagmod[-which(colnames(govspfoagmod)=="FS - ")]
 govspfoagmod <- govspfoagmod[-which(colnames(govspfoagmod)=="gov - obj NA")]
 
-par(mfrow = c(3,3))
-for(i in 1:ncol(govspfoagmod)){print(barplot(table(govspfoagmod[,i]), 
-                                             main = as.character(colnames(govspfoagmod[i])),
-                                             xlab = i))}
-
-
+print("save data")
 write.csv(govspfoagmod, file = "./Output/factor_analysis_data.csv")
 columnnames_wide <- colnames(govspfoagmod)
 save(columnnames_wide, file = "./Output/factor_analysis_names.rda")
