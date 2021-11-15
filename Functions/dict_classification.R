@@ -10,7 +10,7 @@ dict_classification <- function(sheet, dct, clm, class_clm){
       #print(j)
       if((sheet[i,clm] %in% dct[[j]])){
         sheet[i, class_clm] <- j
-        print(paste(j, "found!!!!!!!!!!!!!"))
+        #print(paste(j, "found!!!!!!!!!!!!!"))
       }
     }
   }
