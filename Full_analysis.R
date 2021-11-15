@@ -36,6 +36,13 @@ source("./Data_for_MFA.R")
 # Output: 
 # -- ./Output/factor_analysis_data.csv: Data ready for cluster analysis
 
+rm(list = ls()) #start with a clean environment
+
+# Install dependencies
+list.of.packages <- c("dplyr", "tidyr", "FactoMineR", "PCAmixdata", "ggforce", "ggplot2", "ggalt", "concaveman", "stringi")
+new.packages <- list.of.packages[!(list.of.packages %in% installed.packages()[,"Package"])]
+if(length(new.packages)) install.packages(new.packages)
+
 source("./MFA_and_HCA.R")
 
 # This script performs the multiple factor analysis (MFA) and hierarchical cluster analysis (HCA) from which we draw four clusters representing typical approaches to food security governance simulation modelling
