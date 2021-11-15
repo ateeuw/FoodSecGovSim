@@ -19,6 +19,7 @@ print("sourcing functions")
 source("./Functions/split_and_add_by_ID.R")
 source("./Functions/split_and_add_by_doc.R")
 source("./Functions/split_and_merge_by_doc.R")
+source("./Functions/na_to_no.R")
 source("./Functions/na_to_no_nested.R")
 source("./Functions/na_to_no_nested_simpl.R")
 
@@ -202,8 +203,8 @@ agmod <- full_join(agent, modelling)
 
 # checking whether everything went OK
 nada <- agmod[rowSums(is.na(agmod)) > 4,]
-(mydocs <- sort(unique(agmod$Document)))
-(length(mydocs)) #yes!
+# (mydocs <- sort(unique(agmod$Document)))
+# (length(mydocs)) #yes!
 
 agmod[rowSums(is.na(agmod[,2:9])) > 4,2:9] <- "no" #models that do not have any agents are given no for each agent (otherwise would get NA)
 
@@ -231,38 +232,36 @@ food <- merge(food_com, food_ech)
 food <- food %>% distinct()
 
 # Split up food system - echelon
+# unique(food$`food system - echelon`) #testing
+#
+food$rownr <- 1:nrow(food) #testing
+food$yes <- "yes" #testing
+food$`food system - echelon` <- paste("food -", food$`food system - echelon`) #testing
+food <- food %>% spread(key = "food system - echelon", value = "yes") #testing
+food <- food[,-which(colnames(food)=="rownr")] #testing
 
-unique(food$`food system - echelon`)
+# colnames(food) #testing
 
-food$rownr <- 1:nrow(food)
-food$yes <- "yes"
-food$`food system - echelon` <- paste("food -", food$`food system - echelon`)
-food <- food %>% spread(key = "food system - echelon", value = "yes")
-food <- food[,-which(colnames(food)=="rownr")]
-
-# colnames(food)
-
-for(i in colnames(food)[3:ncol(food)]){
-  cnr <- which(colnames(food) == i) 
-  food[,cnr] <- na_to_no(dat = food, na_col = i, matchterm = "yes", val = "yes")
-}
-
-
-food <- food %>% distinct()
-
-# Split up food system - commodity
-food$rownr <- 1:nrow(food)
-food$yes <- "yes"
-food$`food system - commodity class 2` <- paste("food -", food$`food system - commodity class 2`)
-food <- food %>% spread(key = "food system - commodity class 2", value = "yes")
-food <- food[,-which(colnames(food)=="rownr")]
-
-for(i in colnames(food)[8:ncol(food)]){
+for(i in colnames(food)[3:ncol(food)]){ #testing
   cnr <- which(colnames(food) == i) 
   food[,cnr] <- na_to_no(dat = food, na_col = i, matchterm = "yes", val = "yes")
 }
 
 food <- food %>% distinct()
+
+# Split up food system - commodity  #testing
+food$rownr <- 1:nrow(food) #testing
+food$yes <- "yes" #testing
+food$`food system - commodity class 2` <- paste("food -", food$`food system - commodity class 2`) #testing
+food <- food %>% spread(key = "food system - commodity class 2", value = "yes") #testing
+food <- food[,-which(colnames(food)=="rownr")] #testing
+ 
+for(i in colnames(food)[8:ncol(food)]){ #testing
+ cnr <- which(colnames(food) == i)  #testing
+ food[,cnr] <- na_to_no(dat = food, na_col = i, matchterm = "yes", val = "yes") #testing
+} #testing
+
+food <- food %>% distinct() #testing
 
 # checking whether everything went OK
 nada <- food[rowSums(is.na(food)) > 4,]
@@ -282,7 +281,7 @@ nada <- foagmod[rowSums(is.na(foagmod)) > 4,]
 #############################################
 print("preparing spatial and temporal variables")
 spat <- quotes_wide
-sort(colnames(quotes_wide))
+# sort(colnames(quotes_wide))
 spat_codes <- c("spatial & temporal - geographic representation", "spatial & temporal - hypothetical representation", 
                 "spatial & temporal - WBD7 region", "spatial & temporal - ref quan scale",
                 "spatial & temporal - spatial extent [m2]", "spatial & temporal - spatial resolution [m2]",
@@ -589,6 +588,8 @@ govspfoagmod <- test
 # Split up per measure - NATO subclass
 govspfoagmod$yes <- "yes"
 colnames(govspfoagmod)
+govspfoagmod <- govspfoagmod[-which(colnames(govspfoagmod)=="FS - ")]
+colnames(govspfoagmod)
 govspfoagmod <- unite(govspfoagmod, col = "nest", c(1,which(colnames(govspfoagmod)=="governance - combined measures?"):which(colnames(govspfoagmod)=="gov - obj utilisation")), sep = "_", remove = FALSE)
 govspfoagmod$`per measure - NATO subclass` <- paste("gov -", govspfoagmod$`per measure - NATO subclass`)
 govspfoagmod <- govspfoagmod %>% spread(key = "per measure - NATO subclass", value = "yes")
@@ -611,13 +612,13 @@ nada <- govspfoagmod[rowSums(is.na(govspfoagmod)) > 4,]
 # (mydocs <- sort(unique(govspfoagmod$Document)))
 # (length(mydocs))
 
-govspfoagmod <- govspfoagmod[-which(colnames(govspfoagmod)=="FS - ")]
 govspfoagmod <- govspfoagmod[-which(colnames(govspfoagmod)=="gov - obj NA")]
+govspfoagmod <- govspfoagmod %>% distinct()
 
-print("saving data: ./Output/factor_analysis_data.csv")
-write.csv(govspfoagmod, file = "./Output/factor_analysis_data.csv")
+print("saving data: ./Output/factor_analysis_data_all.csv")
+write.table(govspfoagmod, file = "./Output/factor_analysis_data_all.csv", sep = ";")
 columnnames_wide <- colnames(govspfoagmod)
-save(columnnames_wide, file = "./Output/factor_analysis_names.rda")
+save(columnnames_wide, file = "./Output/factor_analysis_names_all.rda")
 
 print("finished preparing data for factor analysis")
 
