@@ -10,12 +10,12 @@ check_dictionary <- function(codegroup, codedictionary, dat_long){
     missing_classes <- which(dat[,classclm]=="")
     missing_codes <- dat[missing_classes,codeclm]
     missing_codes_str <- toString(unique(missing_codes))
-    print(paste("!!!!!!!!!!!! dictionary is NOT up to date :( !!!!!!!!!!!!"))
-    print("")
-    print("not yet classified:")
+    print(paste("    !!!!!!!!!!!! dictionary is NOT up to date :( !!!!!!!!!!!!"))
+    print("  ")
+    print("    not yet classified:")
     print(missing_codes_str)#)
   }else{
-      return(print("!!!!!!!!!!!! dictionary is up to date :) !!!!!!!!!!!!"))
+      return(print("    !!!!!!!!!!!! dictionary is up to date :) !!!!!!!!!!!!"))
     }
   
 }
