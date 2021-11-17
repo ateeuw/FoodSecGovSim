@@ -5,6 +5,7 @@ library("Rfast")
 # library("formattable") #for making ncie tables #see https://haozhu233.github.io/kableExtra/awesome_table_in_html.html & http://cran.nexr.com/web/packages/kableExtra/vignettes/use_kableExtra_with_formattable.html 
 library("kableExtra") #for making nice tables #see https://haozhu233.github.io/kableExtra/awesome_table_in_html.html & http://cran.nexr.com/web/packages/kableExtra/vignettes/use_kableExtra_with_formattable.html 
 library("webshot")
+library("stringr")
 
 rm(list = ls()) #start with a clean environment
 
@@ -657,11 +658,13 @@ print(" save to:")
 print("  ./Figures/governance_sankey.html")
 print("  ./Figures/governance_sankey.png")
 
-gov <- data[,colnames(data) %in% c("echelon", "NATO", "FS_ind", "Document", "clust"),]
+gov <- data[,colnames(data) %in% c("aff_agent", "NATO", "FS_ind", "Document", "clust"),]
 gov <- gov %>% distinct()
 gov <- na.omit(gov)
 
-gov$echelon <- str_to_title(gov$echelon)
+gov$aff_agent <- gsub("aff ", "", gov$aff_agent)
+gov$aff_agent[gov$aff_agent %in% c("generic agents", "political entities", "other non-food agents")] <- "other"
+gov$aff_agent <- str_to_title(gov$aff_agent)
 gov$FS_ind <- str_to_title(gov$FS_ind)
 
 # Simplify governance by splitting into two columns and grouping into NATO and at-large - individual
@@ -679,9 +682,9 @@ gov$AGI[gov$NATO %in% c("Bespoke messages", "Conditional tokens", "Enablements",
 gov <- gov[,-which(colnames(gov)=="NATO")]
 gov <- gov %>% distinct()
 
-gov_s <- gov %>% group_by(echelon, NATO4, Document, clust) %>% count()
-gov_t <- gov %>% group_by(NATO4, AGI, Document, clust) %>% count()
-gov_u <- gov %>% group_by(AGI, FS_ind, Document, clust) %>% count()
+gov_s <- gov %>% group_by(NATO4, AGI, Document, clust) %>% count()
+gov_t <- gov %>% group_by(AGI, aff_agent, Document, clust) %>% count()
+gov_u <- gov %>% group_by(aff_agent, FS_ind, Document, clust) %>% count()
 
 #intract_target$target <- paste("receiver:", intract_target$target)
 colnames(gov_s) <- c("source",  "target", "ID", "group",  "value")
@@ -717,3 +720,15 @@ s_gov #!! colour by NATO
 saveNetwork(s_gov, "./Figures/governance_sankey.html")
 webshot("./Figures/governance_sankey.html", "./Figures/governance_sankey.png", vwidth = 1200, vheight = 900)
 #############################################
+
+# Make an overview showing the attribution of approaches and papers to clusters
+#############################################
+print("make an overview showing the attribution of approaches and papers to the clusters")
+print(" save to:")
+print("  ./Figures/clusters_combined.png")
+
+source("./Cluster_overview.R")
+#############################################
+
+# To do:
+# - replace gov figure with nice gov figure (seperate script)
